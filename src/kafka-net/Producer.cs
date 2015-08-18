@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -139,9 +138,9 @@ namespace KafkaNet
         /// </summary>
         /// <param name="topic">The name of the topic to get metadata for.</param>
         /// <returns>Topic with metadata information.</returns>
-        public Topic GetTopic(string topic)
+        public Topic GetTopicFromCache(string topic)
         {
-            return _metadataQueries.GetTopic(topic);
+            return _metadataQueries.GetTopicFromCache(topic);
         }
 
 
@@ -171,8 +170,9 @@ namespace KafkaNet
 
         private async Task BatchSendAsync()
         {
-            var outstandingSendTasks = new System.Collections.Concurrent.ConcurrentDictionary<Task, Task>();
-            while (_asyncCollection.IsCompleted == false || _asyncCollection.Count > 0)
+
+
+            while (IsNotDisposedOrHasMessagesToProcess())
             {
                 List<TopicMessage> batch = null;
 
@@ -197,22 +197,16 @@ namespace KafkaNet
                         batch.AddRange(_asyncCollection.Drain());
                     }
 
-                    //we want to fire the batch without blocking and then move on to fire another one
+
                     var sendTask = ProduceAndSendBatchAsync(batch, _stopToken.Token);
-
-                    outstandingSendTasks.TryAdd(sendTask, sendTask);
-
-                    var sendTaskCleanup = sendTask.ContinueWith(result =>
+                    try
                     {
-                        if (result.IsFaulted && batch != null)
-                        {
-                            batch.ForEach(x => x.Tcs.TrySetException(result.ExtractException()));
-                        }
-
-                        //TODO add statistics tracking
-                        outstandingSendTasks.TryRemove(sendTask, out sendTask);
-                    });
-
+                        await sendTask;//if not await the order is not going to be guaranteed
+                    }
+                    catch (Exception ex)
+                    {
+                        batch.ForEach(x => x.Tcs.TrySetException(ex));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -221,18 +215,22 @@ namespace KafkaNet
                         batch.ForEach(x => x.Tcs.TrySetException(ex));
                     }
                 }
+
+
             }
 
-            var referenceToOutstanding = outstandingSendTasks.Values.ToList();
-            if (referenceToOutstanding.Count > 0)
-            {
-                await Task.WhenAll(referenceToOutstanding).ConfigureAwait(false);
-            }
+        }
+
+        private bool IsNotDisposedOrHasMessagesToProcess()
+        {
+            return _asyncCollection.IsCompleted == false || _asyncCollection.Count > 0;
         }
 
         private async Task ProduceAndSendBatchAsync(List<TopicMessage> messages, CancellationToken cancellationToken)
         {
             Interlocked.Add(ref _inFlightMessageCount, messages.Count);
+            var topics = messages.GroupBy(batch => batch.Topic).Select(batch => batch.Key).ToArray();
+            await BrokerRouter.RefreshMissingTopicMetadata(topics);
 
             //we must send a different produce request for each ack level and timeout combination.
             foreach (var ackLevelBatch in messages.GroupBy(batch => new { batch.Acks, batch.Timeout }))
@@ -240,7 +238,7 @@ namespace KafkaNet
                 var messageByRouter = ackLevelBatch.Select(batch => new
                 {
                     TopicMessage = batch,
-                    Route = batch.Partition.HasValue ? BrokerRouter.SelectBrokerRoute(batch.Topic, batch.Partition.Value) : BrokerRouter.SelectBrokerRoute(batch.Topic, batch.Message.Key) 
+                    Route = batch.Partition.HasValue ? BrokerRouter.SelectBrokerRouteFromLocalCache(batch.Topic, batch.Partition.Value) : BrokerRouter.SelectBrokerRouteFromLocalCache(batch.Topic, batch.Message.Key)
                 })
                                          .GroupBy(x => new { x.Route, x.TopicMessage.Topic, x.TopicMessage.Codec });
 
@@ -264,10 +262,11 @@ namespace KafkaNet
 
                     await _semaphoreMaximumAsync.WaitAsync(cancellationToken).ConfigureAwait(false);
 
+                    var sendGroupTask = group.Key.Route.Connection.SendAsync(request);
                     var brokerSendTask = new BrokerRouteSendBatch
                     {
                         Route = group.Key.Route,
-                        Task = group.Key.Route.Connection.SendAsync(request),
+                        Task = sendGroupTask,
                         MessagesSent = group.Select(x => x.TopicMessage).ToList()
                     };
 

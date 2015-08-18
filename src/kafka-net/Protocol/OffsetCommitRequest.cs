@@ -119,19 +119,19 @@ namespace KafkaNet.Protocol
     
     }
 
-    public class OffsetCommitResponse
+    public class OffsetCommitResponse:IBaseResponse
     {
         /// <summary>
         /// The name of the topic this response entry is for.
         /// </summary>
-        public string Topic;
+        public string Topic { get; set; }
         /// <summary>
         /// The id of the partition this response is for.
         /// </summary>
-        public Int32 PartitionId;
+        public Int32 PartitionId { get; set; }
         /// <summary>
         /// Error code of exception that occured during the request.  Zero if no error.
         /// </summary>
-        public Int16 Error;
+        public Int16 Error { get; set; }
     }
 }
