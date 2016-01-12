@@ -121,7 +121,7 @@ namespace KafkaNet
             {
                 try
                 {
-                    var bufferSizeHighWatermark = FetchRequest.DefaultBufferSize;
+                    var bufferSizeHighWatermark = (int)(FetchRequest.DefaultBufferSize * _options.FetchBufferMultiplier);
 
                     _options.Log.DebugFormat("Consumer: Creating polling task for topic: {0} on parition: {1}", topic, partitionId);
                     while (_disposeToken.IsCancellationRequested == false)
