@@ -37,7 +37,7 @@ namespace KafkaNet.Common
         }
 
         public long Length { get { return base.BaseStream.Length; } }
-        public long Position { get { return base.BaseStream.Position; } set { base.BaseStream.Position = 0; } }
+        public long Position { get { return base.BaseStream.Position; } set { base.BaseStream.Position = value; } }
         public bool HasData { get { return base.BaseStream.Position < base.BaseStream.Length; } }
 
         public bool Available(int dataSize)
@@ -108,6 +108,11 @@ namespace KafkaNet.Common
         public override UInt64 ReadUInt64()
         {
             return EndianAwareRead(8, BitConverter.ToUInt64);
+        }
+
+        public byte[] ReadBytes()
+        {
+            return ReadIntPrefixedBytes();
         }
 
         public string ReadInt16String()
