@@ -1,116 +1,82 @@
 KafkaNetClient
 =========
 
-Native C# client for Apache Kafka.  
+Native C# client for Apache Kafka with full async support.
+
+Kafka versions [0.8, 0.10.1]
 
 License
 -----------
-Copyright 2015, Gigya Inc under Apache License, V2.0. See LICENSE file.
+Copyright 2016, Nudge Software Inc under Apache License, V2.0. See LICENSE file.
 
-Summary
+History
 -----------
+This library is a fork of [gigya]'s [KafkaNetClient], itself a fork of [jroland]'s [kafka-net] library. There are significant API changes.
 
-This library is a fork of Jroland's [kafka-net](https://github.com/Jroland/kafka-net) library, with adjustments and improvements (not interchangeable with kafka-net, as there are breaking changes).
+The original .Net project is a port of the [Apache Kafka protocol]. The wire protocol portion is based on the [kafka-python] library writen by [David Arthur] and the general class layout attempts to follow a similar pattern as his project. To that end, this project builds up from the low level Connection object for handling async requests to/from the kafka server, all the way up to a higher level Producer/Consumer classes.
 
-The original project is a .NET implementation of the [Apache Kafka] protocol.  The wire protocol portion is based on the [kafka-python] library writen by [David Arthur] and the general class layout attempts to follow a similar pattern as his project.  To that end, this project builds up from the low level KafkaConnection object for handling async requests to/from the kafka server, all the way up to a higher level Producer/Consumer classes.
-
-##### Improvements and Changes:
-
-- All the code is now async all the way and all blocking operations were removed (**except for the high-level `Consumer` class**).
-- `ProtocolGateway`:
-    * New class that allows simple handling of Kafka protocol messages with error recovery and metadata refreshes.
-- `BrokerRouter`:
-    * Breaking changes were made in order to make it async all-the-way.
-    * Interface was changed to allow greater control working with broker metadata.
-- `Producer`:
-    * Was refactored to use `ProtocolGateway` when sending messages to Kafka (for better error recovery).
-- `ManualConsumer`:
-    * New class (uses `ProtocolGateway`) that allows simple fetches from Kafka brokers (in contrast to the high-level `Consumer` class that includes internal caching and other optimizations).
-- Bug fixes
-    * When sending messages to the same partition with the same Ack level, order is guaranteed.    
-
-
-
-
-
-Examples
+Code Examples
 -----------
 ##### Producer
-```sh
+```csharp
 var options = new KafkaOptions(new Uri("http://SERVER1:9092"), new Uri("http://SERVER2:9092"));
-var router = new BrokerRouter(options);
-using(var client = new Producer(router))
-{
+
+using(var client = new Producer(options)) {
      await client.SendMessageAsync("TestTopic", new Message("hello world"));
 }
-
-
 ```
-##### Consumer
-```sh
-var options = new KafkaOptions(new Uri("http://SERVER1:9092"), new Uri("http://SERVER2:9092"));
-var router = new BrokerRouter(options);
-var consumer = new Consumer(new ConsumerOptions("TestHarness", new BrokerRouter(options)));
 
-//Consume returns a blocking IEnumerable (ie: never ending stream)
-foreach (var message in consumer.Consume())
-{
-    Console.WriteLine("Response: P{0},O{1} : {2}", 
-        message.Meta.PartitionId, message.Meta.Offset, message.Value);  
+##### Consumer
+```csharp
+var options = new KafkaOptions(new Uri("http://SERVER1:9092"), new Uri("http://SERVER2:9092"));
+
+using (var router = new BrokerRouter(options)) {
+	var offset = await router.GetTopicOffsetAsync("TestTopic", 0, CancellationToken.None);
+
+	using (var consumer = new Consumer(router)) {
+	    await consumer.FetchAsync(offset, 10, message => Console.WriteLine("Response: P{0},O{1} : {2}", message.Meta.PartitionId, message.Meta.Offset, message.Value), cancellationToken);
+	}
 }
 ```
 
-##### TestHarness
-The TestHarness project it a simple example console application that will read message from a kafka server and write them to the screen.  It will also take anything typed in the console and send this as a message to the kafka servers.  
-
-Simply modify the kafka server Uri in the code to point to a functioning test server.
-
-
-Pieces of the Puzzle
+Key Components
 -----------
-##### Protocol
-The protocol has been divided up into concrete classes for each request/response pair.  Each class knows how to encode and decode itself into/from their appropriate Kafka protocol byte array.  One benefit of this is that it allows for a nice generic send method on the KafkaConnection.
-
-##### KafkaConnection
-Provides async methods on a persistent connection to a kafka broker (server).  The send method uses the TcpClient send async function and the read stream has a dedicated thread which uses the correlation Id to match send responses to the correct request.
-
-##### BrokerRouter
-Provides metadata based routing of messages to the correct Kafka partition.  This class also manages the multiple KafkaConnections for each Kafka server returned by the broker section in the metadata response.  Routing logic is provided by the IPartitionSelector.
-
-##### ProtocolGateway
-A convenience class that allows sending Kafka protocol messages easily, including error handling and metadata refresh on failure.
-
-##### IPartitionSelector
-Provides the logic for routing which partition the BrokerRouter should choose.  The default selector is the DefaultPartitionSelector which will use round robin partition selection if the key property on the message is null and a mod/hash of the key value if present.
+##### Connection (`KafkaClient.Connection.IConnection`)
+Provides async methods on a persistent connection to a kafka broker (server).  The send method uses the TcpClient sendAsync function and the read stream has a dedicated thread which uses the correlation Id to match send responses to the correct request.
 
 ##### Producer
-Provides a higher level class which uses the combination of the BrokerRouter and KafkaConnection to send batches of messages to a Kafka broker.
+Provides a high level abstraction for sending batches of messages to a Kafka cluster. Internally, it uses the IBrokerRouter and IConnection.
 
 ##### Consumer
-Provides a higher level class which will consumer messages from a whitelist of partitions from a single topic.  The consumption mechanism is a blocking IEnumerable of messages.  If no whitelist is provided then all partitions will be consumed creating one KafkaConnection for each partition leader.
+Provides a mechanism for fetching messages from a Kafka cluster.
 
-#### ManualConsumer
-A class which enables simple manual consuming of messages which encapsulates the Kafka protocol details and enables message fetching, offset fetching, and offset updating. All of this operations are on demand.
+##### Consumer Assignment (`KafkaClient.Assignment`)
+Provides an extesible mechanism for assigning partitions to members of consumer groups, enabling complex coordination across multiple consumers of a set of Kafka topics. The default assignor (ConsumerAssignor) will round robin partition selection across topics.
+
+##### Partition Selection (`KafkaClient.IPartitionSelector`)
+Provides the logic for routing requests to a particular topic to a partition. The default selector (PartitionSelector) will use round robin partition selection if the key property on the message is null and a mod/hash of the key value if present.
+
+##### BrokerRouter (`KafkaClient.IBrokerRouter`)
+Provides routing for topics to partitions, topics and partitions to brokers, and cached access to topic metadata. This class also manages the multiple IConnections to each Kafka broker. Routing logic for partitions is provided by IPartitionSelector.
+
+##### Binary Protocol (`KafkaClient.Protocol.*`)
+The protocol has been divided up into concrete classes for each request/response pair. An Encoder class knows how to encode requests and decode responses into/from their appropriate Kafka protocol byte array. One benefit of this is that it allows for a nice generic send method on the Connection.
 
 Status
 -----------
-Tested with Kafka 0.8.2.
+[![Build status](https://ci.appveyor.com/api/projects/status/e7ej2g9q77if8mkf/branch/master?svg=true)](https://ci.appveyor.com/project/AndrewRobinson/kafkanetclient/branch/master)
 
-This library is still work in progress and was still not deployed to production. We will update when it does.
+** WARNING **
+This library is still work in progress and has not yet been deployed to production. It is also undergoing significant development, and breaking changes will occour.
+This notice will be removed once it's been stabilized and used in production.
 
+The biggest missing piece at this point is [stress testing](https://github.com/awr/KafkaClient/issues/17); more [comprehensive automated tests](https://github.com/awr/KafkaClient/issues/18) are also needed. For the full set, see the [backlog]
+(https://github.com/awr/KafkaClient/projects/1).
 
-##### The major items that needs work are:
-* Better handling of options for providing customization of internal behaviour of the base API. (right now the classes pass around option parameters)
-* General structure of the classes is not finalized and breaking changes will occur.
-* Only Gzip compression is implemented, snappy on the todo.
-* Currently only works with .NET Framework 4.5 as it uses the await command.
-* Test coverage.
-* Documentation.
-
-
-
-
-
+[Apache Kafka protocol]:https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
 [kafka-python]:https://github.com/mumrah/kafka-python
-[Apache Kafka]:http://kafka.apache.org
 [David Arthur]:https://github.com/mumrah
+[kafka-net]:https://github.com/Jroland/kafka-net
+[jroland]:https://github.com/jroland
+[KafkaNetClient]:https://github.com/gigya/KafkaNetClient
+[gigya]:https://github.com/gigya

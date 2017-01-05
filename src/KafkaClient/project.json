@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0-*",
+
+  "dependencies": {
+    "Nito.AsyncEx.Context": "1.1.0",
+    "Nito.AsyncEx.Coordination": "1.0.2",
+    "System.Collections.Immutable": "1.2.0",
+    "System.Diagnostics.TraceSource": "4.0.0",
+    "System.Net.NameResolution": "4.0.0",
+    "System.Threading.Thread": "4.0.0",
+    "System.IO.Compression": "4.3.0"
+  },
+
+  "frameworks": {
+    "net462": {
+    },
+    "netstandard1.3": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.0"
+      }
+    }
+  }
+}

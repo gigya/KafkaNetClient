@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1343EB68-55CB-4452-8386-24A9989DE1C0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>KafkaClient</RootNamespace>
+    <AssemblyName>KafkaClient</AssemblyName>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Nito.AsyncEx.Context, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Nito.AsyncEx.Context.1.1.0\lib\net46\Nito.AsyncEx.Context.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Nito.AsyncEx.Coordination, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Nito.AsyncEx.Coordination.1.0.2\lib\net46\Nito.AsyncEx.Coordination.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Nito.AsyncEx.Tasks, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Nito.AsyncEx.Tasks.1.1.0\lib\net46\Nito.AsyncEx.Tasks.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Nito.Collections.Deque, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Nito.Collections.Deque.1.0.0\lib\portable45-net45+win8+wp8+wpa81\Nito.Collections.Deque.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Nito.Disposables, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Nito.Disposables.1.0.0\lib\portable45-net45+win8+wp8+wpa81\Nito.Disposables.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BrokeredRequest.cs" />
+    <Compile Include="Common\BigEndianBinaryReader.cs" />
+    <Compile Include="Common\BigEndianBinaryWriter.cs" />
+    <Compile Include="Common\Disposable.cs" />
+    <Compile Include="Common\IKafkaReader.cs" />
+    <Compile Include="Common\IKafkaWriter.cs" />
+    <Compile Include="Common\IScheduledTimer.cs" />
+    <Compile Include="Common\LogEvent.cs" />
+    <Compile Include="Common\LogExtensions.cs" />
+    <Compile Include="Common\MergedCancellation.cs" />
+    <Compile Include="Common\KafkaWriter.cs" />
+    <Compile Include="Common\LilliputianExtensions.cs" />
+    <Compile Include="Common\LogLevel.cs" />
+    <Compile Include="Common\RetryAttempt.cs" />
+    <Compile Include="Common\TaskExtensions.cs" />
+    <Compile Include="Common\BackoffRetry.cs" />
+    <Compile Include="Common\DelayedRetry.cs" />
+    <Compile Include="Common\TimedCancellation.cs" />
+    <Compile Include="Connections\Extensions.cs" />
+    <Compile Include="Connections\IConnectionConfiguration.cs" />
+    <Compile Include="Connections\ConnectionComparer.cs" />
+    <Compile Include="Connections\ConnectionConfiguration.cs" />
+    <Compile Include="Connections\DataPayload.cs" />
+    <Compile Include="Common\IRetry.cs" />
+    <Compile Include="Common\NoRetry.cs" />
+    <Compile Include="Common\Retry.cs" />
+    <Compile Include="Connections\IVersionSupport.cs" />
+    <Compile Include="Connections\PartialReadException.cs" />
+    <Compile Include="Connections\SocketPayloadReadTask.cs" />
+    <Compile Include="Connections\SocketPayloadWriteTask.cs" />
+    <Compile Include="Common\CancellableTask.cs" />
+    <Compile Include="Connections\VersionSupport.cs" />
+    <Compile Include="Consumer.cs" />
+    <Compile Include="ConsumerConfiguration.cs" />
+    <Compile Include="ICacheConfiguration.cs" />
+    <Compile Include="IConsumer.cs" />
+    <Compile Include="ConsumerExtensions.cs" />
+    <Compile Include="IConsumerConfiguration.cs" />
+    <Compile Include="IProducer.cs" />
+    <Compile Include="IProducerConfiguration.cs" />
+    <Compile Include="ISendMessageConfiguration.cs" />
+    <Compile Include="CacheConfiguration.cs" />
+    <Compile Include="ProducerConfiguration.cs" />
+    <Compile Include="ProducerExtensions.cs" />
+    <Compile Include="Protocol\CreateTopicsRequest.cs" />
+    <Compile Include="Protocol\CreateTopicsResponse.cs" />
+    <Compile Include="Protocol\DeleteTopicsRequest.cs" />
+    <Compile Include="Protocol\DeleteTopicsResponse.cs" />
+    <Compile Include="Protocol\DescribeGroupsRequest.cs" />
+    <Compile Include="Protocol\DescribeGroupsResponse.cs" />
+    <Compile Include="Protocol\ListGroupsRequest.cs" />
+    <Compile Include="Protocol\ListGroupsResponse.cs" />
+    <Compile Include="Protocol\SaslHandshakeRequest.cs" />
+    <Compile Include="Protocol\SaslHandshakeResponse.cs" />
+    <Compile Include="Protocol\TopicsResponse.cs" />
+    <Compile Include="Protocol\Types\ByteMember.cs" />
+    <Compile Include="Protocol\Types\ConsumerEncoder.cs" />
+    <Compile Include="Protocol\Types\ConsumerMemberAssignment.cs" />
+    <Compile Include="Protocol\Types\ConsumerProtocolMetadata.cs" />
+    <Compile Include="Protocol\GroupRequest.cs" />
+    <Compile Include="Protocol\HeartbeatRequest.cs" />
+    <Compile Include="Protocol\HeartbeatResponse.cs" />
+    <Compile Include="Protocol\IGroupMember.cs" />
+    <Compile Include="Protocol\JoinGroupRequest.cs" />
+    <Compile Include="Protocol\JoinGroupResponse.cs" />
+    <Compile Include="Protocol\LeaveGroupRequest.cs" />
+    <Compile Include="Protocol\LeaveGroupResponse.cs" />
+    <Compile Include="Protocol\SyncGroupRequest.cs" />
+    <Compile Include="Protocol\SyncGroupResponse.cs" />
+    <Compile Include="Protocol\Types\IMemberAssignment.cs" />
+    <Compile Include="Protocol\Types\IMemberMetadata.cs" />
+    <Compile Include="Protocol\Types\IProtocolTypeEncoder.cs" />
+    <Compile Include="Protocol\Types\ProtocolTypeEncoder.cs" />
+    <Compile Include="SendMessageConfiguration.cs" />
+    <Compile Include="Protocol\ApiKeyRequestType.cs" />
+    <Compile Include="Protocol\BufferUnderRunException.cs" />
+    <Compile Include="CachedMetadataException.cs" />
+    <Compile Include="Protocol\CrcValidationException.cs" />
+    <Compile Include="Protocol\FetchOutOfRangeException.cs" />
+    <Compile Include="Protocol\IRequestContext.cs" />
+    <Compile Include="Connections\ConnectionException.cs" />
+    <Compile Include="Protocol\KafkaEncoder.cs" />
+    <Compile Include="KafkaException.cs" />
+    <Compile Include="Protocol\Request.cs" />
+    <Compile Include="Protocol\ApiVersionsResponse.cs" />
+    <Compile Include="Protocol\Broker.cs" />
+    <Compile Include="Protocol\ErrorResponseCode.cs" />
+    <Compile Include="Protocol\Extensions.cs" />
+    <Compile Include="Protocol\FetchResponse.cs" />
+    <Compile Include="Protocol\GroupCoordinatorResponse.cs" />
+    <Compile Include="Protocol\RequestException.cs" />
+    <Compile Include="Protocol\MessageCodec.cs" />
+    <Compile Include="Protocol\MetadataResponse.cs" />
+    <Compile Include="Protocol\OffsetCommitResponse.cs" />
+    <Compile Include="Protocol\OffsetFetchResponse.cs" />
+    <Compile Include="Protocol\OffsetPosition.cs" />
+    <Compile Include="Protocol\OffsetResponse.cs" />
+    <Compile Include="Protocol\RequestContext.cs" />
+    <Compile Include="Protocol\TopicPartition.cs" />
+    <Compile Include="Protocol\TopicResponse.cs" />
+    <Compile Include="Protocol\ApiVersionsRequest.cs" />
+    <Compile Include="Protocol\IResponse.cs" />
+    <Compile Include="Protocol\ProduceResponse.cs" />
+    <Compile Include="StatisticsTracker.cs" />
+    <Compile Include="Connections\ConnectionFactory.cs" />
+    <Compile Include="IKafkaClient.cs" />
+    <Compile Include="Connections\ITcpSocket.cs" />
+    <Compile Include="BrokerRoute.cs" />
+    <Compile Include="OldConsumer.cs" />
+    <Compile Include="Connections\IConnection.cs" />
+    <Compile Include="IBrokerRouter.cs" />
+    <Compile Include="BrokerRouterExtensions.cs" />
+    <Compile Include="ConsumerOptions.cs" />
+    <Compile Include="PartitionSelector.cs" />
+    <Compile Include="Common\ILog.cs" />
+    <Compile Include="IPartitionSelector.cs" />
+    <Compile Include="BrokerRouter.cs" />
+    <Compile Include="Connections\Endpoint.cs" />
+    <Compile Include="Common\Crc32Provider.cs" />
+    <Compile Include="Connections\IConnectionFactory.cs" />
+    <Compile Include="Producer.cs" />
+    <Compile Include="Connections\Connection.cs" />
+    <Compile Include="Common\Extensions.cs" />
+    <Compile Include="KafkaOptions.cs" />
+    <Compile Include="Protocol\GroupCoordinatorRequest.cs" />
+    <Compile Include="Protocol\OffsetFetchRequest.cs" />
+    <Compile Include="Common\Compression.cs" />
+    <Compile Include="Protocol\IRequest.cs" />
+    <Compile Include="Protocol\FetchRequest.cs" />
+    <Compile Include="Protocol\Message.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Protocol\MetadataRequest.cs" />
+    <Compile Include="Protocol\OffsetCommitRequest.cs" />
+    <Compile Include="Protocol\OffsetRequest.cs" />
+    <Compile Include="Protocol\ProduceRequest.cs" />
+    <Compile Include="Common\TraceLog.cs" />
+    <Compile Include="Connections\TcpSocket.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="KafkaClient.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,17 @@
+version: 1.0.{build}
+os: Visual Studio 2015
+
+before_build:
+  - cmd: dotnet restore
+
+build_script:
+  - cmd: dotnet build -c Release src\KafkaClient --no-dependencies --no-incremental
+ 
+test_script:
+  - cmd: dotnet test src\KafkaClient.Tests --where "cat != Load"
+
+notifications:
+- provider: Email
+  to: awrobins@gmail.com
+  on_build_failure: true
+  on_build_status_changed: true
